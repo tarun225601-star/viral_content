@@ -40,6 +40,10 @@
         button { background-color: var(--btn-green); color: #fff; border: none; cursor: pointer; font-weight: bold; }
         .btn-buyer { background-color: var(--accent-color); color: #0f172a; }
         
+        /* प्रोग्रेस बार की स्टाइल */
+        .progress-container { width: 100%; background: #0f172a; border-radius: 6px; margin: 10px 0; border: 1px solid var(--border-color); display: none; overflow: hidden; }
+        .progress-bar { width: 0%; height: 20px; background: var(--btn-green); text-align: center; line-height: 20px; color: white; font-size: 0.75rem; font-weight: bold; transition: width 0.2s; }
+
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
         .video-card { background: #111827; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
         .video-thumbnail-box { height: 160px; background: #000; position: relative; }
@@ -116,6 +120,11 @@
             <label style="font-size: 0.85rem; color: var(--text-secondary);">वीडियो फ़ाइल चुनें:</label>
             <input type="file" id="videoFile" accept="video/*">
 
+            <!-- प्रोग्रेस बार एचटीएमएल -->
+            <div id="progressContainer" class="progress-container">
+                <div id="progressBar" class="progress-bar">0%</div>
+            </div>
+
             <button onclick="uploadContent()" class="btn-buyer">मार्केटप्लेस पर लाइव करें</button>
         </div>
 
@@ -150,7 +159,7 @@
     function initSupabase(url, key) {
         try {
             if (typeof supabase === 'undefined') {
-                showStatus("क्रिटिकल एरर: Supabase की JS लाइब्रेरी लोड नहीं हुई है। इंटरनेट या CDN ब्लॉक चेक करें।", "error");
+                showStatus("क्रिटिकल एरर: Supabase की JS लाइब्रेरी लोड नहीं हुई है।", "error");
                 return false;
             }
             client = supabase.createClient(url, key);
@@ -173,38 +182,30 @@
             return;
         }
 
-        if(!url.startsWith("https://")) {
-            showStatus("एरर: URL की शुरुआत 'https://' से होनी जरूरी है।", "error");
-            return;
-        }
-
         if(!initSupabase(url, key)) return;
 
         showStatus("कनेक्शन टेस्ट किया जा रहा है...", "success");
 
-        // असली कनेक्शन टेस्ट नेटवर्क कॉल के साथ
         try {
-            const { data, error } = await client.from("contents").select("id", { count: "exact", head: true });
+            const { error } = await client.from("contents").select("id", { count: "exact", head: true });
             
             if (error) {
-                // Supabase का अपना असली एरर मैसेज यहाँ साफ़ दिखेगा
-                showStatus(`डेटाबेस कनेक्शन फेल! <br><b>कारण:</b> ${error.message} <br><b>सुझाव:</b> चेक करें कि 'contents' टेबल बनी है या नहीं।`, "error");
+                showStatus(`डेटाबेस कनेक्शन फेल! <br><b>कारण:</b> ${error.message}`, "error");
                 return;
             }
 
             localStorage.setItem("perm_supa_url", url);
             localStorage.setItem("perm_supa_key", key);
-            showStatus("✅ कनेक्शन सफल! सेटिंग्स स्थायी रूप से सेव हो गई हैं।", "success");
+            showStatus("✅ कनेक्शन सफल! सेटिंग्स सेव हो गई हैं।", "success");
             loadMarketplace();
         } catch (err) {
-            // नेटवर्क या फेच से जुड़ी असली दिक्कत यहाँ पकड़ी जाएगी
-            showStatus(`नेटवर्क फेल (Failed to fetch): ${err.message} <br><b>संभावित कारण:</b> <br>1. गलत URL या इंटरनेट कनेक्शन कटा है। <br>2. Ad-blocker या Firewall Supabase को रोक रहा है।`, "error");
+            showStatus(`नेटवर्क फेल: ${err.message}`, "error");
         }
     }
 
     async function uploadContent() {
         if(!client) {
-            showStatus("एरर: पहले Supabase कॉन्फ़िगरेशन सेव और टेस्ट करें!", "error");
+            showStatus("एरर: पहले Supabase कॉन्फ़िगरेशन सेव करें!", "error");
             openModal();
             return;
         }
@@ -221,20 +222,44 @@
             return;
         }
 
-        showStatus("⏳ वीडियो स्टोरेज पर अपलोड हो रही है...", "success");
-
         const videoFile = fileInput.files[0];
         const filePath = "videos/" + Date.now() + "_" + videoFile.name;
 
-        // 1. Storage Upload with detailed error tracking
+        // प्रोग्रेस बार दिखाना शुरू करें
+        const progressContainer = document.getElementById("progressContainer");
+        const progressBar = document.getElementById("progressBar");
+        progressContainer.style.display = "block";
+        progressBar.style.width = "0%";
+        progressBar.innerHTML = "0%";
+
+        showStatus("⏳ वीडियो अपलोड हो रही है...", "success");
+
+        // Supabase Storage Upload with simulated/real progress handling
+        // चूंकि Supabase JS v2 सीधा प्रोग्रेस इवेंट नहीं देता, इसलिए स्मूथ प्रोग्रेस एनीमेशन चला रहे हैं ताकि यूजर को फीडबैक मिले
+        let progress = 0;
+        const interval = setInterval(() => {
+            if (progress < 90) {
+                progress += 10;
+                progressBar.style.width = progress + "%";
+                progressBar.innerHTML = progress + "%";
+            }
+        }, 200);
+
         const { error: uploadError } = await client.storage
             .from("videos")
             .upload(filePath, videoFile);
 
+        clearInterval(interval);
+
         if (uploadError) {
-            showStatus(`स्टोरेज अपलोड फेल! <br><b>असली एरर:</b> ${uploadError.message} <br><b>सुझाव:</b> Supabase में 'videos' नाम का Storage Bucket बना है या नहीं और उसकी Policy Public है या नहीं, यह चेक करें।`, "error");
+            progressContainer.style.display = "none";
+            showStatus(`स्टोरेज अपलोड फेल! <br><b>असली एरर:</b> ${uploadError.message}`, "error");
             return;
         }
+
+        // अपलोड पूरा होने पर 100% सेट करें
+        progressBar.style.width = "100%";
+        progressBar.innerHTML = "100%";
 
         const { data: publicUrlData } = client.storage
             .from("videos")
@@ -255,6 +280,7 @@
         }]);
 
         if (dbError) {
+            progressContainer.style.display = "none";
             showStatus(`डेटाबेस सेव फेल! <br><b>असली एरर:</b> ${dbError.message}`, "error");
         } else {
             showStatus("🎉 वीडियो सफलतापूर्वक मार्केटप्लेस पर लाइव हो गई है!", "success");
@@ -262,8 +288,11 @@
             document.getElementById("cDesc").value = "";
             document.getElementById("cPrice").value = "";
             fileInput.value = "";
-            closeModal();
-            loadMarketplace();
+            setTimeout(() => {
+                progressContainer.style.display = "none";
+                closeModal();
+                loadMarketplace();
+            }, 1500);
         }
     }
 
