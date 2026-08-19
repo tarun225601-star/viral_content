@@ -3,174 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viral Content Marketplace - Pro Version</title>
-    <!-- Supabase Library -->
+    <title>Viral Content Marketplace - Pro</title>
+    <!-- Supabase CDN with Fallback structure -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { 
-            --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; 
-            --text: #f8fafc; --error: #ef4444; --success: #22c55e;
+        :root {
+            --bg-color: #0f172a;       
+            --card-bg: #1e293b;        
+            --text-color: #f8fafc;     
+            --text-secondary: #94a3b8; 
+            --accent-color: #38bdf8;   
+            --btn-green: #10b981;      
+            --border-color: #334155;   
+            --error-color: #ef4444;
+            --success-color: #22c55e;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            margin: 0; 
+            padding: 15px; 
+        }
+
+        .container { max-width: 1200px; margin: auto; background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
         
-        /* Header */
-        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-        .gear-btn { background: #334155; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; color: var(--accent); font-size: 20px; }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { color: var(--accent-color); margin: 0; font-size: 1.5rem; }
+        .gear-btn { background: rgba(56, 189, 248, 0.1); border: 1px solid var(--accent-color); font-size: 22px; cursor: pointer; color: var(--accent-color); padding: 8px 12px; border-radius: 8px; }
+
+        /* साइड कोने में खुलने वाला मोडल */
+        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); z-index: 1000; overflow-y: auto; padding: 15px; box-sizing: border-box; }
+        .modal-content { background: var(--card-bg); padding: 20px; border-radius: 12px; max-width: 500px; margin: 20px auto; border: 1px solid var(--border-color); }
         
-        /* Modal System */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; overflow-y: auto; padding: 20px; }
-        .modal-content { background: var(--card); max-width: 600px; margin: 30px auto; padding: 30px; border-radius: 16px; border: 1px solid #475569; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 1rem; background: #0f172a; color: #fff; }
+        button { background-color: var(--btn-green); color: #fff; border: none; cursor: pointer; font-weight: bold; }
+        .btn-buyer { background-color: var(--accent-color); color: #0f172a; }
         
-        /* Form Styling */
-        input, select, textarea, button { width: 100%; padding: 14px; margin: 10px 0; background: #0f172a; border: 1px solid #475569; color: white; border-radius: 8px; box-sizing: border-box; }
-        button { background: var(--accent); color: #000; font-weight: bold; border: none; cursor: pointer; transition: 0.3s; }
-        button:hover { opacity: 0.8; }
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
+        .video-card { background: #111827; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+        .video-thumbnail-box { height: 160px; background: #000; position: relative; }
+        .video-thumbnail-box video { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Marketplace */
-        .container { max-width: 1000px; margin: 20px auto; padding: 10px; }
-        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .video-card { background: var(--card); border-radius: 12px; padding: 15px; border: 1px solid #334155; }
+        .reach-badge { position: absolute; top: 10px; left: 10px; background: rgba(16, 185, 129, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .lock-badge { position: absolute; top: 10px; right: 10px; background: rgba(239, 68, 68, 0.9); color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
         
-        /* Status Bar */
-        #statusBar { padding: 15px; margin: 10px 0; border-radius: 8px; font-size: 0.9rem; display: none; }
-        .success-box { background: rgba(34, 197, 94, 0.1); border: 1px solid var(--success); color: var(--success); }
-        .error-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); color: var(--error); }
+        .video-details { padding: 12px; }
+        .video-details h3 { margin: 0 0 5px 0; font-size: 1rem; }
+        .video-details p { margin: 0; color: var(--text-secondary); font-size: 0.85rem; }
+        
+        .status-box { padding: 10px; margin: 10px 0; border-radius: 6px; font-size: 0.9rem; display: none; }
+        .error-box { background: rgba(239, 68, 68, 0.2); border: 1px solid var(--error-color); color: #fca5a5; }
+        .success-box { background: rgba(34, 197, 94, 0.2); border: 1px solid var(--success-color); color: #86efac; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Content Hub</h1>
-    <button class="gear-btn" onclick="toggleModal()">⚙️ Settings</button>
-</header>
-
 <div class="container">
-    <div id="marketFeed" class="market-grid">
-        <p>मार्केटलोड हो रहा है...</p>
+    <div class="header-flex">
+        <h1>Viral Content Hub</h1>
+        <!-- एकदम कोने में गियर आइकॉन -->
+        <button class="gear-btn" onclick="openModal()" title="Settings">⚙️</button>
+    </div>
+
+    <div>
+        <h3>लाइव मार्केटप्लेस</h3>
+        <div id="marketFeed" class="market-grid">
+            <p style="color: var(--text-secondary);">मार्केट लोड हो रहा है...</p>
+        </div>
     </div>
 </div>
 
-<!-- Modal Structure -->
-<div id="settingsModal" class="modal">
+<!-- सेटिंग्स और अपलोड पॉप-अप मोडल -->
+<div id="settingsModal">
     <div class="modal-content">
-        <h2 style="margin-top:0;">🔧 सिस्टम कॉन्फ़िगरेशन</h2>
-        
-        <!-- API Settings -->
-        <input type="text" id="db_url" placeholder="Supabase Project URL">
-        <input type="text" id="db_key" placeholder="Supabase Anon Key">
-        <button onclick="saveConfig()" style="background:#64748b; color:white;">सेव करें (Permanent)</button>
-        
-        <hr style="border: 0; border-top: 1px solid #475569; margin: 20px 0;">
-        
-        <!-- Upload Form -->
-        <h3>📤 वीडियो अपलोडर</h3>
-        <input type="text" id="v_title" placeholder="वीडियो का नाम">
-        <select id="v_reach">
-            <option value="10K">10K+ Views</option>
-            <option value="100K">100K+ Views</option>
-            <option value="1M">1M+ Views</option>
-        </select>
-        <textarea id="v_desc" placeholder="डिस्क्रिप्शन"></textarea>
-        <input type="file" id="v_file" accept="video/*">
-        <button onclick="processUpload()">वीडियो लाइव करें</button>
-        
-        <div id="statusBar"></div>
-        <button onclick="toggleModal()" style="background:transparent; color:#94a3b8; border:1px solid #475569;">बंद करें</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin:0; font-size: 1.2rem; color: var(--accent-color);">सेटिंग्स और अपलोड पैनल</h2>
+            <button onclick="closeModal()" style="width: auto; padding: 5px 12px; background: #ef4444; margin:0;">✕</button>
+        </div>
+
+        <!-- स्थायी कॉन्फ़िगरेशन -->
+        <div style="margin-bottom: 15px;">
+            <h3 style="font-size: 0.95rem; color: var(--accent-color); margin: 5px 0;">1. Supabase कॉन्फ़िगरेशन (Permanent)</h3>
+            <input type="text" id="supaUrl" placeholder="Supabase URL (https://xyz.supabase.co)">
+            <input type="text" id="supaKey" placeholder="Supabase Anon Key">
+            <button onclick="saveConfig()" style="background: #2563eb;">कॉन्फ़िगरेशन सेव करें</button>
+        </div>
+
+        <hr style="border-color: var(--border-color); margin: 15px 0;">
+
+        <!-- वीडियो अपलोड सेक्शन -->
+        <div>
+            <h3 style="font-size: 0.95rem; color: var(--accent-color); margin: 5px 0;">2. वीडियो अपलोड करें</h3>
+            <input type="text" id="cTitle" placeholder="वीडियो का शीर्षक (Title)">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <select id="cCategory">
+                    <option value="Comedy">कॉमेडी</option>
+                    <option value="Business">बिजनेस</option>
+                    <option value="Tech">टेक</option>
+                    <option value="Vlog">व्लॉग</option>
+                    <option value="Other">अन्य</option>
+                </select>
+                <select id="cReach">
+                    <option value="10K+ Views">10K Views</option>
+                    <option value="50K+ Views">50K Views</option>
+                    <option value="100K+ Views">100K Views</option>
+                    <option value="1M+ Views">1M+ (Million)</option>
+                    <option value="10M+ Views">10M+ Views</option>
+                </select>
+            </div>
+
+            <input type="number" id="cPrice" placeholder="कीमत (Price in ₹)">
+            <textarea id="cDesc" rows="2" placeholder="वीडियो का डिस्क्रिप्शन..."></textarea>
+            
+            <label style="font-size: 0.85rem; color: var(--text-secondary);">वीडियो फ़ाइल चुनें:</label>
+            <input type="file" id="videoFile" accept="video/*">
+
+            <button onclick="uploadContent()" class="btn-buyer">मार्केटप्लेस पर लाइव करें</button>
+        </div>
+
+        <div id="statusBox" class="status-box"></div>
     </div>
 </div>
 
 <script>
-    // --- APP LOGIC ---
     let client = null;
-    const statusBox = document.getElementById('statusBar');
-
-    window.onload = () => {
-        // परमानेंट सेटिंग्स लोड करें
-        const url = localStorage.getItem('my_url');
-        const key = localStorage.getItem('my_key');
-        if(url && key) {
-            document.getElementById('db_url').value = url;
-            document.getElementById('db_key').value = key;
-            initSupabase(url, key);
-        }
-        loadMarket();
-    };
-
-    function initSupabase(u, k) {
-        try {
-            client = supabase.createClient(u, k);
-        } catch(e) {
-            showStatus("Error Initializing: " + e.message, 'error');
-        }
-    }
-
-    function toggleModal() {
-        const m = document.getElementById('settingsModal');
-        m.style.display = (m.style.display === 'block') ? 'none' : 'block';
-    }
+    const statusBox = document.getElementById("statusBox");
 
     function showStatus(msg, type) {
-        statusBox.style.display = 'block';
-        statusBox.className = (type === 'error') ? 'error-box' : 'success-box';
+        statusBox.style.display = "block";
+        statusBox.className = "status-box " + (type === 'error' ? "error-box" : "success-box");
         statusBox.innerText = msg;
     }
 
-    function saveConfig() {
-        const u = document.getElementById('db_url').value.trim();
-        const k = document.getElementById('db_key').value.trim();
-        if(!u.startsWith('https')) return showStatus("URL गलत है! https:// से शुरू करें", 'error');
-        
-        localStorage.setItem('my_url', u);
-        localStorage.setItem('my_key', k);
-        initSupabase(u, k);
-        showStatus("✅ सेटिंग्स परमानेंट सेव हो गई!", 'success');
-    }
+    // पेज लोड होते ही स्थायी डेटा लोड करना
+    window.onload = function() {
+        const savedUrl = localStorage.getItem("perm_supa_url");
+        const savedKey = localStorage.getItem("perm_supa_key");
 
-    async function processUpload() {
-        if(!client) return showStatus("पहले API Settings सेव करें!", 'error');
-        
-        const file = document.getElementById('v_file').files[0];
-        const title = document.getElementById('v_title').value;
-        if(!file || !title) return showStatus("फाइल और टाइटल जरूरी है!", 'error');
+        if(savedUrl && savedKey) {
+            document.getElementById("supaUrl").value = savedUrl;
+            document.getElementById("supaKey").value = savedKey;
+            initSupabase(savedUrl, savedKey);
+        }
+        loadMarketplace();
+    };
 
-        showStatus("⏳ अपलोड हो रहा है...", 'success');
-
+    function initSupabase(url, key) {
         try {
-            // Storage
-            const { data, error } = await client.storage
-                .from('videos')
-                .upload(Date.now() + '.mp4', file);
-            
-            if(error) throw error;
-
-            // Database
-            const { error: dbErr } = await client
-                .from('contents')
-                .insert([{ title, description: document.getElementById('v_desc').value, url: data.path }]);
-
-            if(dbErr) throw dbErr;
-
-            showStatus("🎉 वीडियो सफलतापूर्वक लाइव है!", 'success');
-            loadMarket();
+            if (typeof supabase !== 'undefined') {
+                client = supabase.createClient(url, key);
+            } else {
+                showStatus("सुपरबेस लाइब्रेरी लोड होने में विफल। इंटरनेट चेक करें।", "error");
+            }
         } catch(e) {
-            showStatus("❌ Failed to fetch/upload: " + e.message, 'error');
-            console.error(e);
+            showStatus("कनेक्शन एरर: " + e.message, "error");
         }
     }
 
-    async function loadMarket() {
-        if(!client) return;
-        const { data, error } = await client.from('contents').select('*');
-        if(error) return console.log("डेटा लोड एरर");
-        
-        const feed = document.getElementById('marketFeed');
-        feed.innerHTML = data.map(i => `
-            <div class="video-card">
-                <h3>${i.title}</h3>
-                <p>${i.description}</p>
-                <button>देखें / खरीदें</button>
-            </div>
-        `).join('');
+    function openModal() { document.getElementById("settingsModal").style.display = "block"; }
+    function closeModal() { document.getElementById("settingsModal").style.display = "none"; }
+
+    function saveConfig() {
+        const url = document.getElementById("supaUrl").value.trim();
+        const key = document.getElementById("supaKey").value.trim();
+
+        if(!url || !key) {
+            showStatus("कृपया URL और Key दोनों भरें!", "error");
+            return;
+        }
+
+        if(!url.startsWith("https://")) {
+            showStatus("URL की शुरुआत https:// से होनी चाहिए!", "error");
+            return;
+        }
+
+        localStorage.setItem("perm_supa_url", url);
+        localStorage.setItem("perm_supa_key", key);
+        initSupabase(url, key);
+        showStatus("कॉन्फ़िगरेशन सफलतापूर्वक सेव हो गई!", "success");
+    }
+
+    async function uploadContent() {
+        if(!client) {
+            showStatus("पहले ऊपर Supabase कॉन्फ़िगरेशन सेव करें!", "error");
+            return;
+        }
+
+        const title = document.getElementById("cTitle").value.trim();
+        const category = document.getElementById("cCategory").value;
+        const reach_range = document.getElementById("cReach").value;
+        const description = document.getElementById("cDesc").value.trim();
+        const price = parseFloat(document.getElementById("cPrice").value);
+        const fileInput = document.getElementById("videoFile");
+
+        if(!title || !price || fileInput.files.length === 0) {
+            showStatus("कृपया टाइटल, कीमत और वीडियो फ़ाइल जरूर चुनें!", "error");
+            return;
+        }
+
+        showStatus("वीडियो अपलोड हो रही है, प्रतीक्षा करें...", "success");
+
+        const videoFile = fileInput.files[0];
+        const filePath = "videos/" + Date.now() + "_" + videoFile.name;
+
+        // 1. Storage Upload
+        const { error: uploadError } = await client.storage
+            .from("videos")
+            .upload(filePath, videoFile);
+
+        if (uploadError) {
+            showStatus("स्टोरेज एरर: " + uploadError.message, "error");
+            return;
+        }
+
+        // Public URL निकालना
+        const { data: publicUrlData } = client.storage
+            .from("videos")
+            .getPublicUrl(filePath);
+
+        // 2. Database Insert
+        const { error: dbError } = await client.from("contents").insert([{
+            title, 
+            category, 
+            reach_range,
+            description, 
+            full_video_url: publicUrlData.publicUrl, 
+            price, 
+            file_path: filePath, 
+            is_sold: false
+        }]);
+
+        if (dbError) {
+            showStatus("डेटाबेस एरर: " + dbError.message, "error");
+        } else {
+            showStatus("वीडियो सफलतापूर्वक लाइव हो गई है!", "success");
+            document.getElementById("cTitle").value = "";
+            document.getElementById("cDesc").value = "";
+            document.getElementById("cPrice").value = "";
+            fileInput.value = "";
+            closeModal();
+            loadMarketplace();
+        }
+    }
+
+    async function loadMarketplace() {
+        const feed = document.getElementById("marketFeed");
+        if(!client) {
+            feed.innerHTML = "<p style='color:var(--text-secondary); text-align:center;'>कृपया ⚙️ गियर आइकॉन से Supabase कनेक्ट करें।</p>";
+            return;
+        }
+
+        const { data, error } = await client.from("contents").select("*").eq("is_sold", false);
+
+        if (error) {
+            feed.innerHTML = "<p style='color:#ef4444; text-align:center;'>डेटा लोड करने में त्रुटि: " + error.message + "</p>";
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            feed.innerHTML = "<p style='text-align:center; color:var(--text-secondary);'>मार्केटप्लेस पर अभी कोई वीडियो उपलब्ध नहीं है।</p>";
+            return;
+        }
+
+        feed.innerHTML = "";
+        data.forEach(item => {
+            feed.innerHTML += `
+                <div class="video-card">
+                    <div class="video-thumbnail-box">
+                        <span class="reach-badge">🔥 ${item.reach_range || '10K+'}</span>
+                        <span class="lock-badge">🔒 Locked</span>
+                        <video controls controlsList="nodownload" src="${item.full_video_url || ''}"></video>
+                    </div>
+                    <div class="video-details">
+                        <span style="font-size:0.75rem; color:var(--accent-color); background:rgba(56,189,248,0.1); padding:2px 6px; border-radius:4px;">${item.category || 'General'}</span>
+                        <h3>${item.title}</h3>
+                        <p>${item.description || 'कोई विवरण नहीं'}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                            <span style="font-weight:bold; color:#34d399;">₹${item.price}</span>
+                        </div>
+                    </div>
+                    <div style="padding: 10px; background: #111827; border-top: 1px solid var(--border-color); display: flex; gap: 8px;">
+                        <button onclick="alert('डेमो वीडियो प्लेयर ऊपर कार्ड में उपलब्ध है।')" style="background:#3b82f6; padding:8px; font-size:0.85rem; margin:0;">डेमो</button>
+                        <button onclick="buyItem('${item.id}', ${item.price}, '${item.file_path}')" class="btn-buyer" style="padding:8px; font-size:0.85rem; margin:0;">Buy & Unlock</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    async function buyItem(content_id, price, file_path) {
+        let buyer_id = prompt("खरीदने के लिए अपनी बायर आईडी दर्ज करें:");
+        if(!buyer_id) return;
+
+        const { error: updateError } = await client.from("contents").update({ is_sold: true }).eq("id", content_id);
+        if (updateError) {
+            alert("खरीदारी विफल: " + updateError.message);
+            return;
+        }
+
+        await client.storage.from("videos").remove([file_path]);
+        alert("खरीदारी सफल! वीडियो फाइल डिलीट कर दी गई है और आपको अधिकार मिल गया है।");
+        loadMarketplace();
     }
 </script>
 
