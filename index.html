@@ -3,158 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viral Content Marketplace - Dashboard with Description</title>
+    <title>Viral Content Marketplace - Permanent Config</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 850px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
-        h1 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
-        h2 { color: #444; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
-        .box { margin-bottom: 25px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
-        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; font-family: inherit; }
-        input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; }
-        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-        button:hover { background-color: #218838; }
-        .btn-buyer { background-color: #007bff; }
-        .btn-buyer:hover { background-color: #0056b3; }
-        .gear-icon { position: absolute; top: 25px; right: 25px; font-size: 26px; cursor: pointer; background: none; border: none; width: auto; padding: 0; }
-        
-        /* डैशबोर्ड ग्रिड और कार्ड स्टाइल */
-        .market-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
-        .content-card { background: white; border: 1px solid #ddd; padding: 18px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
-        .content-info { flex-grow: 1; }
-        .content-info h3 { margin: 0 0 5px 0; color: #333; }
-        .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
-        .content-info p { margin: 4px 0; color: #555; font-size: 0.95rem; }
-        .price-tag { font-weight: bold; color: #28a745; font-size: 1.1rem; }
-        
-        .card-buttons { display: flex; flex-direction: column; gap: 8px; min-width: 130px; }
-        .card-buttons button { padding: 8px 12px; margin: 0; width: 100%; font-size: 0.9rem; }
-        .btn-cart { background-color: #ffc107; color: #333; }
-        .btn-cart:hover { background-color: #e0a800; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-secondary: #aaa;
+            --accent-color: #bb86fc;
+            --btn-green: #03dac6;
+            --border-color: #333;
+        }
 
-        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: auto; background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        
+        h1 { color: var(--accent-color); margin-top: 0; font-size: 1.8rem; text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        h2 { color: var(--accent-color); font-size: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-top: 0; }
+        .section-box { margin-bottom: 25px; padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: #181818; }
+        
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid var(--border-color); border-radius: 6px; box-sizing: border-box; font-size: 1rem; font-family: inherit; background: #2c2c2c; color: #fff; }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent-color); outline: none; }
+        
+        button { background-color: var(--btn-green); color: #000; border: none; cursor: pointer; font-weight: bold; transition: opacity 0.2s; }
+        button:hover { opacity: 0.85; }
+        .btn-buyer { background-color: var(--accent-color); color: #000; }
+
+        /* 3-Layer Grid Dashboard (YouTube / Stock Style) */
+        .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 15px; }
+        .video-card { background: #252525; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; }
+        
+        .video-thumbnail-box { height: 160px; background: #111; display: flex; justify-content: center; align-items: center; position: relative; color: #777; font-size: 1.1rem; }
+        .lock-badge { position: absolute; top: 10px; right: 10px; background: rgba(255, 0, 0, 0.8); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        
+        .video-details { padding: 15px; flex-grow: 1; }
+        .badge { display: inline-block; background: #333; color: var(--accent-color); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; }
+        .video-details h3 { margin: 0 0 8px 0; color: #fff; font-size: 1.1rem; }
+        .video-details p { margin: 4px 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4; }
+        .price-tag { font-weight: bold; color: var(--btn-green); font-size: 1.1rem; margin-top: 10px; display: block; }
+        
+        .card-buttons { padding: 15px; background: #1c1c1c; border-top: 1px solid var(--border-color); display: flex; gap: 10px; }
+        .card-buttons button { margin: 0; padding: 10px; font-size: 0.9rem; }
+        .btn-cart { background-color: #ffc107; color: #000; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- सेटिंग्स गियर आइकॉन -->
-    <button class="gear-icon" onclick="openSettings()" title="Supabase Settings">⚙️</button>
-    
     <h1>Viral Content Marketplace</h1>
 
-    <!-- 1. सेलर रजिस्ट्रेशन फॉर्म -->
-    <div class="box">
-        <h2>सेलर रजिस्ट्रेशन (1 महीना फ्री ट्रायल)</h2>
-        <input type="email" id="sellerEmail" placeholder="ईमेल आईडी (Email)">
-        <input type="text" id="sellerName" placeholder="पूरा नाम (Full Name)">
+    <!-- 1. सेलर सेक्शन (रजिस्ट्रेशन और वीडियो अपलोड) -->
+    <div class="section-box">
+        <h2>1. सेलर सेक्शन (रजिस्ट्रेशन और कंटेंट अपलोड)</h2>
+        
+        <h3 style="color:#aaa; font-size:1rem; margin-top:10px;">सेलर रजिस्ट्रेशन</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="email" id="sellerEmail" placeholder="ईमेल आईडी (Email)">
+            <input type="text" id="sellerName" placeholder="पूरा नाम (Full Name)">
+        </div>
         <input type="text" id="sellerAddress" placeholder="पूरा पता (Address)">
-        <input type="text" id="sellerBank" placeholder="बैंक अकाउंट नंबर (Bank Account No)">
-        <input type="text" id="sellerIFSC" placeholder="आईएफएससी कोड (IFSC Code)">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="sellerBank" placeholder="बैंक अकाउंट नंबर (Bank Account No)">
+            <input type="text" id="sellerIFSC" placeholder="आईएफएससी कोड (IFSC Code)">
+        </div>
         <button onclick="registerSeller()">सेलर रजिस्टर करें</button>
-    </div>
 
-    <!-- 2. कंटेंट अपलोड फॉर्म (डिस्क्रिप्शन और कैटगरी के साथ) -->
-    <div class="box">
-        <h2>कंटेंट अपलोड करें (सेलर)</h2>
+        <hr style="border-color: var(--border-color); margin: 25px 0;">
+
+        <h3 style="color:#aaa; font-size:1rem;">कंटेंट अपलोड करें</h3>
         <input type="text" id="sellerIdInput" placeholder="अपनी सेलर आईडी (UUID दर्ज करें)">
         <input type="text" id="cTitle" placeholder="वीडियो का शीर्षक (Video Title)">
         
-        <select id="cCategory">
-            <option value="">-- कैटगरी चुनें --</option>
-            <option value="Comedy">कॉमेडी (Comedy)</option>
-            <option value="Business">बिजनेस (Business)</option>
-            <option value="Tech">टेक (Tech)</option>
-            <option value="Vlog">व्लॉग (Vlog)</option>
-            <option value="Roast">रोस्ट (Roast)</option>
-            <option value="Motivation">मोटिवेशन (Motivation)</option>
-            <option value="Other">अन्य (Other)</option>
-        </select>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <select id="cCategory">
+                <option value="">-- कैटगरी चुनें --</option>
+                <option value="Comedy">कॉमेडी (Comedy)</option>
+                <option value="Business">बिजनेस (Business)</option>
+                <option value="Tech">टेक (Tech)</option>
+                <option value="Vlog">व्लॉग (Vlog)</option>
+                <option value="Roast">रोस्ट (Roast)</option>
+                <option value="Motivation">मोटिवेशन (Motivation)</option>
+                <option value="Other">अन्य (Other)</option>
+            </select>
+            <input type="number" id="cPrice" placeholder="कीमत (Price in INR)">
+        </div>
 
-        <textarea id="cDesc" rows="3" placeholder="कंटेंट का विवरण लिखें (किस बारे में है वीडियो, किसके लिए है...)"></textarea>
-        
-        <input type="number" id="cPrice" placeholder="कीमत (Price in INR)">
+        <textarea id="cDesc" rows="2" placeholder="कंटेंट का विवरण (किस बारे में है वीडियो...)"></textarea>
         <input type="text" id="cFilePath" placeholder="स्टोरेज फाइल पाथ (जैसे: video1.mp4)">
-        <button onclick="uploadContent()">कंटेंट मार्केटप्लेस पर डालें</button>
+        <button onclick="uploadContent()">कंटेंट मार्केटप्लेस पर लाइव करें</button>
     </div>
 
-    <!-- 3. लाइव मार्केटप्लेस डैशबोर्ड -->
-    <div class="box">
-        <h2>लाइव मार्केटप्लेस डैशबोर्ड (उपलब्ध कंटेंट)</h2>
-        <button onclick="loadMarketplace()" style="background-color: #17a2b8; margin-bottom: 15px;">डैशबोर्ड रिफ्रेश करें</button>
+    <!-- 2. बायर सेक्शन / डैशबोर्ड (3-Layer Grid) -->
+    <div class="section-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h2 style="border:none; margin:0;">2. बायर डैशबोर्ड (लाइव वीडियो फीड)</h2>
+            <button onclick="loadMarketplace()" style="width: auto; padding: 8px 15px; margin:0; background:#333; color:#fff;">🔄 रिफ्रेश</button>
+        </div>
         <div id="marketFeed" class="market-grid">
-            <p style="text-align: center; color: #777;">डैशबोर्ड लोड हो रहा है...</p>
+            <p style="text-align: center; color: #777; grid-column: span 3;">डैशबोर्ड लोड हो रहा है...</p>
         </div>
     </div>
 </div>
 
-<!-- सेटिंग्स मोडल -->
-<div id="settingsModal">
-    <div class="modal-content">
-        <h2>Supabase सेटिंग्स</h2>
-        <label>Supabase URL:</label>
-        <input type="text" id="supaUrl" placeholder="https://xyz.supabase.co">
-        <label>Supabase Anon Key:</label>
-        <input type="text" id="supaKey" placeholder="eyJhbGci...">
-        <button onclick="saveSettings()">सेव और कनेक्ट करें</button>
-        <button onclick="closeSettings()" style="background-color: #dc3545;">बंद करें</button>
-    </div>
-</div>
-
 <script>
-    let client = null;
+    // =========================================================================
+    // स्थायी सुपरबेस कॉन्फ़िगरेशन (यहाँ अपनी Supabase URL और Anon Key हमेशा के लिए पेस्ट कर दें)
+    // =========================================================================
+    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co"; // अपनी URL यहाँ डालें
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";            // अपनी Anon Key यहाँ डालें
+
+    // ऑटोमेटिक क्लाइंट इनिशियलाइजेशन (हमेशा के लिए कोड में फिक्स)
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     window.onload = function() {
-        const savedUrl = localStorage.getItem("supa_url");
-        const savedKey = localStorage.getItem("supa_key");
-        if (savedUrl && savedKey) {
-            document.getElementById("supaUrl").value = savedUrl;
-            document.getElementById("supaKey").value = savedKey;
-            client = supabase.createClient(savedUrl, savedKey);
-            loadMarketplace();
-        } else {
-            openSettings();
-        }
+        loadMarketplace(); // पेज खुलते ही डैशबोर्ड लोड होगा
     };
 
-    function openSettings() { document.getElementById("settingsModal").style.display = "flex"; }
-    function closeSettings() { document.getElementById("settingsModal").style.display = "none"; }
-
-    function saveSettings() {
-        const url = document.getElementById("supaUrl").value.trim();
-        const key = document.getElementById("supaKey").value.trim();
-        if (url && key) {
-            localStorage.setItem("supa_url", url);
-            localStorage.setItem("supa_key", key);
-            client = supabase.createClient(url, key);
-            alert("Supabase कनेक्ट हो गया!");
-            closeSettings();
-            loadMarketplace();
-        } else {
-            alert("कृपया सही वैल्यू भरें।");
-        }
-    }
-
-    function checkClient() {
-        if (!client) {
-            alert("कृपया पहले ⚙️ बटन से Supabase सेटिंग्स करें!");
-            openSettings();
-            return false;
-        }
-        return true;
-    }
-
-    // 1. सेलर रजिस्ट्रेशन
+    // 1. सेलर रजिस्ट्रेशन लॉजिक
     async function registerSeller() {
-        if (!checkClient()) return;
         const email = document.getElementById("sellerEmail").value.trim();
         const full_name = document.getElementById("sellerName").value.trim();
         const address = document.getElementById("sellerAddress").value.trim();
         const bank_account_no = document.getElementById("sellerBank").value.trim();
         const ifsc_code = document.getElementById("sellerIFSC").value.trim();
+
+        if (!email || !full_name || !bank_account_no || !ifsc_code) {
+            alert("कृपया सभी जरूरी जानकारी भरें!");
+            return;
+        }
 
         const { error } = await client.from("profiles").insert([{
             email, user_type: "seller", full_name, address, bank_account_no, ifsc_code, is_subscriber: true
@@ -162,7 +140,7 @@
 
         if (error) alert("एरर: " + error.message);
         else {
-            alert("सेलर सफल रजिस्ट्रेशन!");
+            alert("सेलर सफलतापूर्वक रजिस्टर हो गया है!");
             document.getElementById("sellerEmail").value = "";
             document.getElementById("sellerName").value = "";
             document.getElementById("sellerAddress").value = "";
@@ -171,9 +149,8 @@
         }
     }
 
-    // 2. कंटेंट अपलोड (डिस्क्रिप्शन और कैटगरी के साथ)
+    // 2. कंटेंट अपलोड लॉजिक
     async function uploadContent() {
-        if (!checkClient()) return;
         const seller_id = document.getElementById("sellerIdInput").value.trim();
         const title = document.getElementById("cTitle").value.trim();
         const category = document.getElementById("cCategory").value;
@@ -182,13 +159,13 @@
         const file_path = document.getElementById("cFilePath").value.trim();
 
         if (!seller_id || !title || !category || !price || !file_path) {
-            alert("कृपया सभी जरूरी फील्ड भरें!");
+            alert("कृपया सभी फील्ड भरें!");
             return;
         }
 
         const { data: seller } = await client.from("profiles").select("is_subscriber, user_type").eq("id", seller_id).single();
         if (!seller || !seller.is_subscriber) {
-            alert("अमान्य सेलर आईडी या सब्सक्रिप्शन खत्म!");
+            alert("अमान्य सेलर आईडी या सब्सक्रिप्शन समाप्त!");
             return;
         }
 
@@ -198,7 +175,7 @@
 
         if (error) alert("अपलोड फेल: " + error.message);
         else {
-            alert("कंटेंट मार्केटप्लेस पर लाइव हो गया!");
+            alert("कंटेंट मार्केटप्लेस पर लाइव कर दिया गया है!");
             document.getElementById("cTitle").value = "";
             document.getElementById("cCategory").value = "";
             document.getElementById("cDesc").value = "";
@@ -208,37 +185,40 @@
         }
     }
 
-    // 3. डैशबोर्ड लोड करना (डिस्क्रिप्शन और कैटगरी दिखाते हुए)
+    // 3. मार्केटप्लेस डैशबोर्ड लोड करना (3-Layer Grid)
     async function loadMarketplace() {
-        if (!client) return;
         const feed = document.getElementById("marketFeed");
-        feed.innerHTML = "<p style='text-align:center;'>लोड हो रहा है...</p>";
+        feed.innerHTML = "<p style='text-align:center; color:#777; grid-column:span 3;'>लोड हो रहा है...</p>";
 
         const { data, error } = await client.from("contents").select("*").eq("is_sold", false);
 
         if (error) {
-            feed.innerHTML = "<p style='color:red; text-align:center;'>डेटा लोड करने में समस्या आई। (शायद Supabase टेबल में category और description कॉलम जोड़ने बाकी हैं)</p>";
+            feed.innerHTML = "<p style='color:#cf6679; text-align:center; grid-column:span 3;'>डेटा लोड करने में त्रुटि। कृपया अपनी Supabase URL और Key जांच लें।</p>";
             return;
         }
 
         if (data.length === 0) {
-            feed.innerHTML = "<p style='text-align:center; color:#777;'>अभी मार्केटप्लेस पर कोई कंटेंट उपलब्ध नहीं है।</p>";
+            feed.innerHTML = "<p style='text-align:center; color:#777; grid-column:span 3;'>मार्केटप्लेस पर अभी कोई वीडियो उपलब्ध नहीं है।</p>";
             return;
         }
 
         feed.innerHTML = "";
         data.forEach(item => {
             feed.innerHTML += `
-                <div class="content-card">
-                    <div class="content-info">
+                <div class="video-card">
+                    <div class="video-thumbnail-box">
+                        <span class="lock-badge">🔒 Locked</span>
+                        <span>[ YouTube Style Video ]</span>
+                    </div>
+                    <div class="video-details">
                         <span class="badge">${item.category || 'General'}</span>
                         <h3>${item.title}</h3>
-                        <p>${item.description || 'कोई विवरण उपलब्ध नहीं है।'}</p>
-                        <p class="price-tag">₹${item.price}</p>
+                        <p>${item.description || 'विवरण उपलब्ध नहीं है।'}</p>
+                        <span class="price-tag">₹${item.price}</span>
                     </div>
                     <div class="card-buttons">
-                        <button class="btn-cart" onclick="addToCart('${item.title}', ${item.price})">Add to Cart</button>
-                        <button class="btn-buyer" onclick="buyItem('${item.id}', ${item.price}, '${item.file_path}')">Buy Now</button>
+                        <button class="btn-cart" onclick="addToCart('${item.title}', ${item.price})">Cart</button>
+                        <button class="btn-buyer" onclick="buyItem('${item.id}', ${item.price}, '${item.file_path}')">Buy & Unlock</button>
                     </div>
                 </div>
             `;
@@ -246,13 +226,11 @@
     }
 
     function addToCart(title, price) {
-        alert(`"${title}" (₹${price}) को आपके कार्ट में जोड़ दिया गया है!`);
+        alert(`"${title}" (₹${price}) कार्ट में जोड़ दिया गया है!`);
     }
 
-    // 4. डायरेक्ट Buy Now और ऑटो-डिलीट लॉजिक
+    // 4. बायर द्वारा खरीदने पर लॉक खोलना और फाइल डिलीट करना
     async function buyItem(content_id, price, file_path) {
-        if (!checkClient()) return;
-        
         let buyer_id = prompt("कृपया अपनी बायर आईडी (Buyer UUID) दर्ज करें:");
         if (!buyer_id) return;
 
@@ -268,7 +246,7 @@
 
         await client.storage.from("viral-videos").remove([file_path]);
 
-        alert("पेमेंट सफल! कंटेंट अनलॉक हो गया है और मार्केटप्लेस से हमेशा के लिए हटा दिया गया है।");
+        alert("पेमेंट सफल! लॉक खुल गया है, फाइल डाउनलोड हो गई है और सर्वर से हमेशा के लिए डिलीट कर दी गई है।");
         loadMarketplace();
     }
 </script>
