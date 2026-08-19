@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viral Content Marketplace - Full & Final</title>
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        h1 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        h2 { color: #444; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
+        .box { margin-bottom: 25px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        input:focus { border-color: #1a73e8; outline: none; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background-color: #218838; }
+        .btn-buyer { background-color: #007bff; }
+        .btn-buyer:hover { background-color: #0056b3; }
+        .gear-icon { position: absolute; top: 25px; right: 25px; font-size: 26px; cursor: pointer; background: none; border: none; width: auto; padding: 0; }
+        #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .status-msg { font-weight: bold; margin-top: 5px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- सेटिंग्स गियर आइकॉन -->
+    <button class="gear-icon" onclick="openSettings()" title="Supabase Settings">⚙️</button>
+    
+    <h1>Viral Content Marketplace</h1>
+
+    <!-- 1. सेलर रजिस्ट्रेशन फॉर्म -->
+    <div class="box">
+        <h2>सेलर रजिस्ट्रेशन (1 महीना फ्री ट्रायल)</h2>
+        <input type="email" id="sellerEmail" placeholder="ईमेल आईडी (Email)">
+        <input type="text" id="sellerName" placeholder="पूरा नाम (Full Name)">
+        <input type="text" id="sellerAddress" placeholder="पूरा पता (Address)">
+        <input type="text" id="sellerBank" placeholder="बैंक अकाउंट नंबर (Bank Account No)">
+        <input type="text" id="sellerIFSC" placeholder="आईएफएससी कोड (IFSC Code)">
+        <button onclick="registerSeller()">सेलर रजिस्टर करें</button>
+    </div>
+
+    <!-- 2. कंटेंट अपलोड फॉर्म -->
+    <div class="box">
+        <h2>कंटेंट अपलोड करें (सेलर)</h2>
+        <input type="text" id="sellerIdInput" placeholder="अपनी सेलर आईडी (UUID दर्ज करें)">
+        <input type="text" id="cTitle" placeholder="वीडियो का शीर्षक (Video Title)">
+        <input type="number" id="cPrice" placeholder="कीमत (Price in INR)">
+        <input type="text" id="cFilePath" placeholder="स्टोरेज फाइल पाथ (जैसे: video1.mp4)">
+        <button onclick="uploadContent()">कंटेंट मार्केटप्लेस पर डालें</button>
+    </div>
+
+    <!-- 3. बायर परचेज फॉर्म -->
+    <div class="box">
+        <h2>कंटेंट खरीदें (बायर सेक्शन)</h2>
+        <input type="text" id="buyerIdInput" placeholder="आपकी बायर आईडी (UUID दर्ज करें)">
+        <input type="text" id="cId" placeholder="खरीदने वाले कंटेंट की आईडी (Content ID)">
+        <button class="btn-buyer" onclick="buyContent()">खरीदें और अनलॉक करें (ऑटो-डिलीट)</button>
+    </div>
+</div>
+
+<!-- सेटिंग्स मोडल (Supabase Credentials के लिए) -->
+<div id="settingsModal">
+    <div class="modal-content">
+        <h2>Supabase सेटिंग्स</h2>
+        <label>Supabase URL:</label>
+        <input type="text" id="supaUrl" placeholder="https://xyz.supabase.co">
+        <label>Supabase Anon Key:</label>
+        <input type="text" id="supaKey" placeholder="eyJhbGci...">
+        <button onclick="saveSettings()">सेव और कनेक्ट करें</button>
+        <button onclick="closeSettings()" style="background-color: #dc3545;">बंद करें</button>
+    </div>
+</div>
+
+<script>
+    let supabaseClient = null;
+
+    // पेज लोड होने पर क्रेडेंशियल्स चेक करना
+    window.onload = function() {
+        const savedUrl = localStorage.getItem("supa_url");
+        const savedKey = localStorage.getItem("supa_key");
+        if (savedUrl && savedKey) {
+            document.getElementById("supaUrl").value = savedUrl;
+            document.getElementById("supaKey").value = savedKey;
+            supabaseClient = supabase.createClient(savedUrl, savedKey);
+        } else {
+            openSettings(); // अगर सेटिंग्स नहीं हैं, तो पहली बार में मोडल खुलेगा
+        }
+    };
+
+    function openSettings() {
+        document.getElementById("settingsModal").style.display = "flex";
+    }
+
+    function closeSettings() {
+        document.getElementById("settingsModal").style.display = "none";
+    }
+
+    function saveSettings() {
+        const url = document.getElementById("supaUrl").value.trim();
+        const key = document.getElementById("supaKey").value.trim();
+        if (url && key) {
+            localStorage.setItem("supa_url", url);
+            localStorage.setItem("supa_key", key);
+            supabaseClient = supabase.createClient(url, key);
+            alert("Supabase सेटिंग्स सफलतापूर्वक सेव हो गई हैं!");
+            closeSettings();
+        } else {
+            alert("कृपया URL और Key दोनों सही से भरें।");
+        }
+    }
+
+    function checkClient() {
+        if (!supabaseClient) {
+            alert("कृपया पहले ऊपर दिए गए गियर आइकॉन (⚙️) पर क्लिक करके Supabase कनेक्ट करें!");
+            openSettings();
+            return false;
+        }
+        return true;
+    }
+
+    // 1. सेलर रजिस्ट्रेशन लॉजिक
+    async function registerSeller() {
+        if (!checkClient()) return;
+        const email = document.getElementById("sellerEmail").value.trim();
+        const full_name = document.getElementById("sellerName").value.trim();
+        const address = document.getElementById("sellerAddress").value.trim();
+        const bank_account_no = document.getElementById("sellerBank").value.trim();
+        const ifsc_code = document.getElementById("sellerIFSC").value.trim();
+
+        if (!email || !full_name || !bank_account_no || !ifsc_code) {
+            alert("कृपया सभी जरूरी बैंक और पर्सनल डिटेल्स भरें!");
+            return;
+        }
+
+        const { data, error } = await supabaseClient.from("profiles").insert([{
+            email, user_type: "seller", full_name, address, bank_account_no, ifsc_code, is_subscriber: true
+        }]).select();
+
+        if (error) {
+            alert("रजिस्ट्रेशन फेल: " + error.message);
+        } else {
+            alert("बधाई हो! सेलर सफलतापूर्वक रजिस्टर हो गया है और 1 महीने का फ्री ट्रायल चालू हो गया है।");
+            // फॉर्म साफ़ करें
+            document.getElementById("sellerEmail").value = "";
+            document.getElementById("sellerName").value = "";
+            document.getElementById("sellerAddress").value = "";
+            document.getElementById("sellerBank").value = "";
+            document.getElementById("sellerIFSC").value = "";
+        }
+    }
+
+    // 2. कंटेंट अपलोड लॉजिक
+    async function uploadContent() {
+        if (!checkClient()) return;
+        const seller_id = document.getElementById("sellerIdInput").value.trim();
+        const title = document.getElementById("cTitle").value.trim();
+        const price = parseFloat(document.getElementById("cPrice").value);
+        const file_path = document.getElementById("cFilePath").value.trim();
+
+        if (!seller_id || !title || !price || !file_path) {
+            alert("कृपया सभी फील्ड भरें!");
+            return;
+        }
+
+        // चेक करें कि सेलर का सब्सक्रिप्शन चालू है या नहीं
+        const { data: seller, error: sError } = await supabaseClient.from("profiles").select("is_subscriber, user_type").eq("id", seller_id).single();
+        
+        if (sError || !seller || seller.user_type !== "seller" || !seller.is_subscriber) {
+            alert("अमान्य सेलर आईडी या आपका सब्सक्रिप्शन समाप्त हो गया है!");
+            return;
+        }
+
+        const { error } = await supabaseClient.from("contents").insert([{
+            seller_id, title, price, file_path, is_sold: false
+        }]);
+
+        if (error) {
+            alert("अपलोड फेल: " + error.message);
+        } else {
+            alert("कंटेंट सफलतापूर्वक मार्केटप्लेस पर लाइव हो गया है!");
+            document.getElementById("cTitle").value = "";
+            document.getElementById("cPrice").value = "";
+            document.getElementById("cFilePath").value = "";
+        }
+    }
+
+    // 3. बायर परचेज, पेमेंट और ऑटो-डिलीट लॉजिक
+    async function buyContent() {
+        if (!checkClient()) return;
+        const buyer_id = document.getElementById("buyerIdInput").value.trim();
+        const content_id = document.getElementById("cId").value.trim();
+
+        if (!buyer_id || !content_id) {
+            alert("कृपया बायर आईडी और कंटेंट आईडी दोनों दर्ज करें!");
+            return;
+        }
+
+        // कंटेंट की स्थिति जांचें
+        const { data: content, error: cError } = await supabaseClient.from("contents").select("*").eq("id", content_id).single();
+        
+        if (cError || !content) {
+            alert("यह कंटेंट नहीं मिला या डिलीट हो चुका है!");
+            return;
+        }
+        if (content.is_sold) {
+            alert("यह कंटेंट पहले ही बिक चुका है और सर्वर से हटा दिया गया है!");
+            return;
+        }
+
+        // स्टेप A: कंटेंट को 'Sold' मार्क करें
+        const { error: updateError } = await supabaseClient.from("contents").update({ is_sold: true }).eq("id", content_id);
+        if (updateError) {
+            alert("ट्रांजैक्शन एरर: " + updateError.message);
+            return;
+        }
+
+        // स्टेप B: ट्रांजैक्शन रिकॉर्ड सेव करें
+        await supabaseClient.from("transactions").insert([{
+            content_id, buyer_id, amount_paid: content.price
+        }]);
+
+        // स्टेप C: सर्वर स्टोरेज से फाइल को हमेशा के लिए डिलीट करें
+        await supabaseClient.storage.from("viral-videos").remove([content.file_path]);
+
+        alert("पेमेंट सफल! कंटेंट अनलॉक हो गया है और मार्केटप्लेस से हमेशा के लिए हटा दिया गया है।");
+        document.getElementById("cId").value = "";
+    }
+</script>
+
+</body>
+</html>
