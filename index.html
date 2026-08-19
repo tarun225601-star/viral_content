@@ -3,25 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viral Content Marketplace - Full & Final</title>
+    <title>Viral Content Marketplace - Dashboard with Description</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
+        .container { max-width: 850px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; }
         h1 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
         h2 { color: #444; font-size: 1.2rem; border-bottom: 2px solid #eee; padding-bottom: 8px; margin-top: 0; }
         .box { margin-bottom: 25px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
-        input:focus { border-color: #1a73e8; outline: none; }
+        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; font-family: inherit; }
+        input:focus, select:focus, textarea:focus { border-color: #1a73e8; outline: none; }
         button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
         button:hover { background-color: #218838; }
         .btn-buyer { background-color: #007bff; }
         .btn-buyer:hover { background-color: #0056b3; }
         .gear-icon { position: absolute; top: 25px; right: 25px; font-size: 26px; cursor: pointer; background: none; border: none; width: auto; padding: 0; }
+        
+        /* डैशबोर्ड ग्रिड और कार्ड स्टाइल */
+        .market-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 15px; }
+        .content-card { background: white; border: 1px solid #ddd; padding: 18px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; }
+        .content-info { flex-grow: 1; }
+        .content-info h3 { margin: 0 0 5px 0; color: #333; }
+        .badge { display: inline-block; background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; margin-bottom: 6px; }
+        .content-info p { margin: 4px 0; color: #555; font-size: 0.95rem; }
+        .price-tag { font-weight: bold; color: #28a745; font-size: 1.1rem; }
+        
+        .card-buttons { display: flex; flex-direction: column; gap: 8px; min-width: 130px; }
+        .card-buttons button { padding: 8px 12px; margin: 0; width: 100%; font-size: 0.9rem; }
+        .btn-cart { background-color: #ffc107; color: #333; }
+        .btn-cart:hover { background-color: #e0a800; }
+
         #settingsModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .status-msg { font-weight: bold; margin-top: 5px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -43,26 +57,41 @@
         <button onclick="registerSeller()">सेलर रजिस्टर करें</button>
     </div>
 
-    <!-- 2. कंटेंट अपलोड फॉर्म -->
+    <!-- 2. कंटेंट अपलोड फॉर्म (डिस्क्रिप्शन और कैटगरी के साथ) -->
     <div class="box">
         <h2>कंटेंट अपलोड करें (सेलर)</h2>
         <input type="text" id="sellerIdInput" placeholder="अपनी सेलर आईडी (UUID दर्ज करें)">
         <input type="text" id="cTitle" placeholder="वीडियो का शीर्षक (Video Title)">
+        
+        <select id="cCategory">
+            <option value="">-- कैटगरी चुनें --</option>
+            <option value="Comedy">कॉमेडी (Comedy)</option>
+            <option value="Business">बिजनेस (Business)</option>
+            <option value="Tech">टेक (Tech)</option>
+            <option value="Vlog">व्लॉग (Vlog)</option>
+            <option value="Roast">रोस्ट (Roast)</option>
+            <option value="Motivation">मोटिवेशन (Motivation)</option>
+            <option value="Other">अन्य (Other)</option>
+        </select>
+
+        <textarea id="cDesc" rows="3" placeholder="कंटेंट का विवरण लिखें (किस बारे में है वीडियो, किसके लिए है...)"></textarea>
+        
         <input type="number" id="cPrice" placeholder="कीमत (Price in INR)">
         <input type="text" id="cFilePath" placeholder="स्टोरेज फाइल पाथ (जैसे: video1.mp4)">
         <button onclick="uploadContent()">कंटेंट मार्केटप्लेस पर डालें</button>
     </div>
 
-    <!-- 3. बायर परचेज फॉर्म -->
+    <!-- 3. लाइव मार्केटप्लेस डैशबोर्ड -->
     <div class="box">
-        <h2>कंटेंट खरीदें (बायर सेक्शन)</h2>
-        <input type="text" id="buyerIdInput" placeholder="आपकी बायर आईडी (UUID दर्ज करें)">
-        <input type="text" id="cId" placeholder="खरीदने वाले कंटेंट की आईडी (Content ID)">
-        <button class="btn-buyer" onclick="buyContent()">खरीदें और अनलॉक करें (ऑटो-डिलीट)</button>
+        <h2>लाइव मार्केटप्लेस डैशबोर्ड (उपलब्ध कंटेंट)</h2>
+        <button onclick="loadMarketplace()" style="background-color: #17a2b8; margin-bottom: 15px;">डैशबोर्ड रिफ्रेश करें</button>
+        <div id="marketFeed" class="market-grid">
+            <p style="text-align: center; color: #777;">डैशबोर्ड लोड हो रहा है...</p>
+        </div>
     </div>
 </div>
 
-<!-- सेटिंग्स मोडल (Supabase Credentials के लिए) -->
+<!-- सेटिंग्स मोडल -->
 <div id="settingsModal">
     <div class="modal-content">
         <h2>Supabase सेटिंग्स</h2>
@@ -76,28 +105,23 @@
 </div>
 
 <script>
-    let supabaseClient = null;
+    let client = null;
 
-    // पेज लोड होने पर क्रेडेंशियल्स चेक करना
     window.onload = function() {
         const savedUrl = localStorage.getItem("supa_url");
         const savedKey = localStorage.getItem("supa_key");
         if (savedUrl && savedKey) {
             document.getElementById("supaUrl").value = savedUrl;
             document.getElementById("supaKey").value = savedKey;
-            supabaseClient = supabase.createClient(savedUrl, savedKey);
+            client = supabase.createClient(savedUrl, savedKey);
+            loadMarketplace();
         } else {
-            openSettings(); // अगर सेटिंग्स नहीं हैं, तो पहली बार में मोडल खुलेगा
+            openSettings();
         }
     };
 
-    function openSettings() {
-        document.getElementById("settingsModal").style.display = "flex";
-    }
-
-    function closeSettings() {
-        document.getElementById("settingsModal").style.display = "none";
-    }
+    function openSettings() { document.getElementById("settingsModal").style.display = "flex"; }
+    function closeSettings() { document.getElementById("settingsModal").style.display = "none"; }
 
     function saveSettings() {
         const url = document.getElementById("supaUrl").value.trim();
@@ -105,24 +129,25 @@
         if (url && key) {
             localStorage.setItem("supa_url", url);
             localStorage.setItem("supa_key", key);
-            supabaseClient = supabase.createClient(url, key);
-            alert("Supabase सेटिंग्स सफलतापूर्वक सेव हो गई हैं!");
+            client = supabase.createClient(url, key);
+            alert("Supabase कनेक्ट हो गया!");
             closeSettings();
+            loadMarketplace();
         } else {
-            alert("कृपया URL और Key दोनों सही से भरें।");
+            alert("कृपया सही वैल्यू भरें।");
         }
     }
 
     function checkClient() {
-        if (!supabaseClient) {
-            alert("कृपया पहले ऊपर दिए गए गियर आइकॉन (⚙️) पर क्लिक करके Supabase कनेक्ट करें!");
+        if (!client) {
+            alert("कृपया पहले ⚙️ बटन से Supabase सेटिंग्स करें!");
             openSettings();
             return false;
         }
         return true;
     }
 
-    // 1. सेलर रजिस्ट्रेशन लॉजिक
+    // 1. सेलर रजिस्ट्रेशन
     async function registerSeller() {
         if (!checkClient()) return;
         const email = document.getElementById("sellerEmail").value.trim();
@@ -131,20 +156,13 @@
         const bank_account_no = document.getElementById("sellerBank").value.trim();
         const ifsc_code = document.getElementById("sellerIFSC").value.trim();
 
-        if (!email || !full_name || !bank_account_no || !ifsc_code) {
-            alert("कृपया सभी जरूरी बैंक और पर्सनल डिटेल्स भरें!");
-            return;
-        }
-
-        const { data, error } = await supabaseClient.from("profiles").insert([{
+        const { error } = await client.from("profiles").insert([{
             email, user_type: "seller", full_name, address, bank_account_no, ifsc_code, is_subscriber: true
-        }]).select();
+        }]);
 
-        if (error) {
-            alert("रजिस्ट्रेशन फेल: " + error.message);
-        } else {
-            alert("बधाई हो! सेलर सफलतापूर्वक रजिस्टर हो गया है और 1 महीने का फ्री ट्रायल चालू हो गया है।");
-            // फॉर्म साफ़ करें
+        if (error) alert("एरर: " + error.message);
+        else {
+            alert("सेलर सफल रजिस्ट्रेशन!");
             document.getElementById("sellerEmail").value = "";
             document.getElementById("sellerName").value = "";
             document.getElementById("sellerAddress").value = "";
@@ -153,81 +171,105 @@
         }
     }
 
-    // 2. कंटेंट अपलोड लॉजिक
+    // 2. कंटेंट अपलोड (डिस्क्रिप्शन और कैटगरी के साथ)
     async function uploadContent() {
         if (!checkClient()) return;
         const seller_id = document.getElementById("sellerIdInput").value.trim();
         const title = document.getElementById("cTitle").value.trim();
+        const category = document.getElementById("cCategory").value;
+        const description = document.getElementById("cDesc").value.trim();
         const price = parseFloat(document.getElementById("cPrice").value);
         const file_path = document.getElementById("cFilePath").value.trim();
 
-        if (!seller_id || !title || !price || !file_path) {
-            alert("कृपया सभी फील्ड भरें!");
+        if (!seller_id || !title || !category || !price || !file_path) {
+            alert("कृपया सभी जरूरी फील्ड भरें!");
             return;
         }
 
-        // चेक करें कि सेलर का सब्सक्रिप्शन चालू है या नहीं
-        const { data: seller, error: sError } = await supabaseClient.from("profiles").select("is_subscriber, user_type").eq("id", seller_id).single();
-        
-        if (sError || !seller || seller.user_type !== "seller" || !seller.is_subscriber) {
-            alert("अमान्य सेलर आईडी या आपका सब्सक्रिप्शन समाप्त हो गया है!");
+        const { data: seller } = await client.from("profiles").select("is_subscriber, user_type").eq("id", seller_id).single();
+        if (!seller || !seller.is_subscriber) {
+            alert("अमान्य सेलर आईडी या सब्सक्रिप्शन खत्म!");
             return;
         }
 
-        const { error } = await supabaseClient.from("contents").insert([{
-            seller_id, title, price, file_path, is_sold: false
+        const { error } = await client.from("contents").insert([{
+            seller_id, title, category, description, price, file_path, is_sold: false
         }]);
 
-        if (error) {
-            alert("अपलोड फेल: " + error.message);
-        } else {
-            alert("कंटेंट सफलतापूर्वक मार्केटप्लेस पर लाइव हो गया है!");
+        if (error) alert("अपलोड फेल: " + error.message);
+        else {
+            alert("कंटेंट मार्केटप्लेस पर लाइव हो गया!");
             document.getElementById("cTitle").value = "";
+            document.getElementById("cCategory").value = "";
+            document.getElementById("cDesc").value = "";
             document.getElementById("cPrice").value = "";
             document.getElementById("cFilePath").value = "";
+            loadMarketplace();
         }
     }
 
-    // 3. बायर परचेज, पेमेंट और ऑटो-डिलीट लॉजिक
-    async function buyContent() {
+    // 3. डैशबोर्ड लोड करना (डिस्क्रिप्शन और कैटगरी दिखाते हुए)
+    async function loadMarketplace() {
+        if (!client) return;
+        const feed = document.getElementById("marketFeed");
+        feed.innerHTML = "<p style='text-align:center;'>लोड हो रहा है...</p>";
+
+        const { data, error } = await client.from("contents").select("*").eq("is_sold", false);
+
+        if (error) {
+            feed.innerHTML = "<p style='color:red; text-align:center;'>डेटा लोड करने में समस्या आई। (शायद Supabase टेबल में category और description कॉलम जोड़ने बाकी हैं)</p>";
+            return;
+        }
+
+        if (data.length === 0) {
+            feed.innerHTML = "<p style='text-align:center; color:#777;'>अभी मार्केटप्लेस पर कोई कंटेंट उपलब्ध नहीं है।</p>";
+            return;
+        }
+
+        feed.innerHTML = "";
+        data.forEach(item => {
+            feed.innerHTML += `
+                <div class="content-card">
+                    <div class="content-info">
+                        <span class="badge">${item.category || 'General'}</span>
+                        <h3>${item.title}</h3>
+                        <p>${item.description || 'कोई विवरण उपलब्ध नहीं है।'}</p>
+                        <p class="price-tag">₹${item.price}</p>
+                    </div>
+                    <div class="card-buttons">
+                        <button class="btn-cart" onclick="addToCart('${item.title}', ${item.price})">Add to Cart</button>
+                        <button class="btn-buyer" onclick="buyItem('${item.id}', ${item.price}, '${item.file_path}')">Buy Now</button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function addToCart(title, price) {
+        alert(`"${title}" (₹${price}) को आपके कार्ट में जोड़ दिया गया है!`);
+    }
+
+    // 4. डायरेक्ट Buy Now और ऑटो-डिलीट लॉजिक
+    async function buyItem(content_id, price, file_path) {
         if (!checkClient()) return;
-        const buyer_id = document.getElementById("buyerIdInput").value.trim();
-        const content_id = document.getElementById("cId").value.trim();
-
-        if (!buyer_id || !content_id) {
-            alert("कृपया बायर आईडी और कंटेंट आईडी दोनों दर्ज करें!");
-            return;
-        }
-
-        // कंटेंट की स्थिति जांचें
-        const { data: content, error: cError } = await supabaseClient.from("contents").select("*").eq("id", content_id).single();
         
-        if (cError || !content) {
-            alert("यह कंटेंट नहीं मिला या डिलीट हो चुका है!");
-            return;
-        }
-        if (content.is_sold) {
-            alert("यह कंटेंट पहले ही बिक चुका है और सर्वर से हटा दिया गया है!");
-            return;
-        }
+        let buyer_id = prompt("कृपया अपनी बायर आईडी (Buyer UUID) दर्ज करें:");
+        if (!buyer_id) return;
 
-        // स्टेप A: कंटेंट को 'Sold' मार्क करें
-        const { error: updateError } = await supabaseClient.from("contents").update({ is_sold: true }).eq("id", content_id);
+        const { error: updateError } = await client.from("contents").update({ is_sold: true }).eq("id", content_id);
         if (updateError) {
-            alert("ट्रांजैक्शन एरर: " + updateError.message);
+            alert("खरीदारी विफल: " + updateError.message);
             return;
         }
 
-        // स्टेप B: ट्रांजैक्शन रिकॉर्ड सेव करें
-        await supabaseClient.from("transactions").insert([{
-            content_id, buyer_id, amount_paid: content.price
+        await client.from("transactions").insert([{
+            content_id, buyer_id, amount_paid: price
         }]);
 
-        // स्टेप C: सर्वर स्टोरेज से फाइल को हमेशा के लिए डिलीट करें
-        await supabaseClient.storage.from("viral-videos").remove([content.file_path]);
+        await client.storage.from("viral-videos").remove([file_path]);
 
         alert("पेमेंट सफल! कंटेंट अनलॉक हो गया है और मार्केटप्लेस से हमेशा के लिए हटा दिया गया है।");
-        document.getElementById("cId").value = "";
+        loadMarketplace();
     }
 </script>
 
