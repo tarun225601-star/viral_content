@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Viral Content Marketplace - Permanent Config</title>
+    <title>Viral Content Marketplace - Secure Full Video Player</title>
     <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -17,7 +17,31 @@
             --border-color: #333;
         }
 
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            margin: 0; 
+            padding: 20px; 
+            user-select: none; 
+            -webkit-user-select: none;
+        }
+
+        /* एंटी-स्क्रीनशॉट और एंटी-रिकॉर्ड प्राइवेसी लेयर */
+        #privacyOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            color: #ff5555;
+            font-size: 1.8rem;
+            font-weight: bold;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            text-align: center;
+        }
+
         .container { max-width: 1200px; margin: auto; background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
         
         h1 { color: var(--accent-color); margin-top: 0; font-size: 1.8rem; text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
@@ -31,12 +55,15 @@
         button:hover { opacity: 0.85; }
         .btn-buyer { background-color: var(--accent-color); color: #000; }
 
-        /* 3-Layer Grid Dashboard (YouTube / Stock Style) */
+        /* 3-Layer Grid Dashboard */
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 15px; }
         .video-card { background: #252525; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 10px rgba(0,0,0,0.3); position: relative; }
         
-        .video-thumbnail-box { height: 160px; background: #111; display: flex; justify-content: center; align-items: center; position: relative; color: #777; font-size: 1.1rem; }
-        .lock-badge { position: absolute; top: 10px; right: 10px; background: rgba(255, 0, 0, 0.8); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        /* फुल वीडियो प्लेयर बॉक्स (डाउनलोड बटन डिसेबल) */
+        .video-thumbnail-box { height: 180px; background: #000; display: flex; justify-content: center; align-items: center; position: relative; }
+        .video-thumbnail-box video { width: 100%; height: 100%; object-fit: cover; }
+        
+        .lock-badge { position: absolute; top: 10px; right: 10px; background: rgba(255, 0, 0, 0.85); color: white; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; z-index: 10; }
         
         .video-details { padding: 15px; flex-grow: 1; }
         .badge { display: inline-block; background: #333; color: var(--accent-color); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; }
@@ -49,14 +76,17 @@
         .btn-cart { background-color: #ffc107; color: #000; }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
+
+<!-- एंटी-स्क्रीनशॉट वार्निंग स्क्रीन -->
+<div id="privacyOverlay">⚠️ सुरक्षा चेतावनी: स्क्रीन रिकॉर्डिंग या स्क्रीनशॉट प्रतिबंधित है!</div>
 
 <div class="container">
     <h1>Viral Content Marketplace</h1>
 
-    <!-- 1. सेलर सेक्शन (रजिस्ट्रेशन और वीडियो अपलोड) -->
+    <!-- 1. सेलर सेक्शन -->
     <div class="section-box">
-        <h2>1. सेलर सेक्शन (रजिस्ट्रेशन और कंटेंट अपलोड)</h2>
+        <h2>1. सेलर सेक्शन (रजिस्ट्रेशन और फुल वीडियो अपलोड)</h2>
         
         <h3 style="color:#aaa; font-size:1rem; margin-top:10px;">सेलर रजिस्ट्रेशन</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -72,7 +102,7 @@
 
         <hr style="border-color: var(--border-color); margin: 25px 0;">
 
-        <h3 style="color:#aaa; font-size:1rem;">कंटेंट अपलोड करें</h3>
+        <h3 style="color:#aaa; font-size:1rem;">पूरी वीडियो और फाइल अपलोड करें</h3>
         <input type="text" id="sellerIdInput" placeholder="अपनी सेलर आईडी (UUID दर्ज करें)">
         <input type="text" id="cTitle" placeholder="वीडियो का शीर्षक (Video Title)">
         
@@ -90,15 +120,16 @@
             <input type="number" id="cPrice" placeholder="कीमत (Price in INR)">
         </div>
 
-        <textarea id="cDesc" rows="2" placeholder="कंटेंट का विवरण (किस बारे में है वीडियो...)"></textarea>
-        <input type="text" id="cFilePath" placeholder="स्टोरेज फाइल पाथ (जैसे: video1.mp4)">
+        <textarea id="cDesc" rows="2" placeholder="कंटेंट का विवरण..."></textarea>
+        <input type="text" id="cFullVideoUrl" placeholder="पूरी वीडियो लिंक (जिसे बायर चलाकर देखेगा)">
+        <input type="text" id="cFilePath" placeholder="ओरिजिनल फाईल पाथ (खरीदने के बाद डिलीट होने वाली)">
         <button onclick="uploadContent()">कंटेंट मार्केटप्लेस पर लाइव करें</button>
     </div>
 
-    <!-- 2. बायर सेक्शन / डैशबोर्ड (3-Layer Grid) -->
+    <!-- 2. बायर डैशबोर्ड -->
     <div class="section-box">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h2 style="border:none; margin:0;">2. बायर डैशबोर्ड (लाइव वीडियो फीड)</h2>
+            <h2 style="border:none; margin:0;">2. बायर डैशबोर्ड (फुल वीडियो प्लेयर)</h2>
             <button onclick="loadMarketplace()" style="width: auto; padding: 8px 15px; margin:0; background:#333; color:#fff;">🔄 रिफ्रेश</button>
         </div>
         <div id="marketFeed" class="market-grid">
@@ -108,20 +139,32 @@
 </div>
 
 <script>
-    // =========================================================================
-    // स्थायी सुपरबेस कॉन्फ़िगरेशन (यहाँ अपनी Supabase URL और Anon Key हमेशा के लिए पेस्ट कर दें)
-    // =========================================================================
-    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co"; // अपनी URL यहाँ डालें
-    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";            // अपनी Anon Key यहाँ डालें
+    const SUPABASE_URL = "https://YOUR_SUPABASE_PROJECT_ID.supabase.co"; 
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY_HERE";            
 
-    // ऑटोमेटिक क्लाइंट इनिशियलाइजेशन (हमेशा के लिए कोड में फिक्स)
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     window.onload = function() {
-        loadMarketplace(); // पेज खुलते ही डैशबोर्ड लोड होगा
+        loadMarketplace();
     };
 
-    // 1. सेलर रजिस्ट्रेशन लॉजिक
+    // एंटी-पाइरेसी: F12, Inspect, PrintScreen और Window Blur सुरक्षा
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 'u') || e.key === 'PrintScreen') {
+            e.preventDefault();
+            alert("सुरक्षा कारणों से स्क्रीनशॉट या इंस्पेक्ट करना प्रतिबंधित है!");
+            return false;
+        }
+    });
+
+    // अगर यूजर विंडो से बाहर गया या रिकॉर्डिंग ऑन की तो स्क्रीन ब्लैक हो जाएगी
+    window.addEventListener('blur', function() {
+        document.getElementById('privacyOverlay').style.display = 'flex';
+    });
+    window.addEventListener('focus', function() {
+        document.getElementById('privacyOverlay').style.display = 'none';
+    });
+
     async function registerSeller() {
         const email = document.getElementById("sellerEmail").value.trim();
         const full_name = document.getElementById("sellerName").value.trim();
@@ -149,16 +192,16 @@
         }
     }
 
-    // 2. कंटेंट अपलोड लॉजिक
     async function uploadContent() {
         const seller_id = document.getElementById("sellerIdInput").value.trim();
         const title = document.getElementById("cTitle").value.trim();
         const category = document.getElementById("cCategory").value;
         const description = document.getElementById("cDesc").value.trim();
+        const full_video_url = document.getElementById("cFullVideoUrl").value.trim();
         const price = parseFloat(document.getElementById("cPrice").value);
         const file_path = document.getElementById("cFilePath").value.trim();
 
-        if (!seller_id || !title || !category || !price || !file_path) {
+        if (!seller_id || !title || !category || !price || !file_path || !full_video_url) {
             alert("कृपया सभी फील्ड भरें!");
             return;
         }
@@ -170,22 +213,22 @@
         }
 
         const { error } = await client.from("contents").insert([{
-            seller_id, title, category, description, price, file_path, is_sold: false
+            seller_id, title, category, description, full_video_url, price, file_path, is_sold: false
         }]);
 
         if (error) alert("अपलोड फेल: " + error.message);
         else {
-            alert("कंटेंट मार्केटप्लेस पर लाइव कर दिया गया है!");
+            alert("पूरी वीडियो के साथ कंटेंट मार्केटप्लेस पर लाइव कर दिया गया है!");
             document.getElementById("cTitle").value = "";
             document.getElementById("cCategory").value = "";
             document.getElementById("cDesc").value = "";
+            document.getElementById("cFullVideoUrl").value = "";
             document.getElementById("cPrice").value = "";
             document.getElementById("cFilePath").value = "";
             loadMarketplace();
         }
     }
 
-    // 3. मार्केटप्लेस डैशबोर्ड लोड करना (3-Layer Grid)
     async function loadMarketplace() {
         const feed = document.getElementById("marketFeed");
         feed.innerHTML = "<p style='text-align:center; color:#777; grid-column:span 3;'>लोड हो रहा है...</p>";
@@ -193,7 +236,7 @@
         const { data, error } = await client.from("contents").select("*").eq("is_sold", false);
 
         if (error) {
-            feed.innerHTML = "<p style='color:#cf6679; text-align:center; grid-column:span 3;'>डेटा लोड करने में त्रुटि। कृपया अपनी Supabase URL और Key जांच लें।</p>";
+            feed.innerHTML = "<p style='color:#cf6679; text-align:center; grid-column:span 3;'>डेटा लोड करने में त्रुटि। (Supabase टेबल में full_video_url कॉलम जोड़ें)</p>";
             return;
         }
 
@@ -208,7 +251,9 @@
                 <div class="video-card">
                     <div class="video-thumbnail-box">
                         <span class="lock-badge">🔒 Locked</span>
-                        <span>[ YouTube Style Video ]</span>
+                        <video controls controlsList="nodownload" src="${item.full_video_url || ''}">
+                            आपका ब्राउज़र वीडियो टैग सपोर्ट नहीं करता।
+                        </video>
                     </div>
                     <div class="video-details">
                         <span class="badge">${item.category || 'General'}</span>
@@ -229,7 +274,6 @@
         alert(`"${title}" (₹${price}) कार्ट में जोड़ दिया गया है!`);
     }
 
-    // 4. बायर द्वारा खरीदने पर लॉक खोलना और फाइल डिलीट करना
     async function buyItem(content_id, price, file_path) {
         let buyer_id = prompt("कृपया अपनी बायर आईडी (Buyer UUID) दर्ज करें:");
         if (!buyer_id) return;
@@ -246,7 +290,7 @@
 
         await client.storage.from("viral-videos").remove([file_path]);
 
-        alert("पेमेंट सफल! लॉक खुल गया है, फाइल डाउनलोड हो गई है और सर्वर से हमेशा के लिए डिलीट कर दी गई है।");
+        alert("पेमेंट सफल! फाइल डाउनलोड हो गई है और सर्वर से हमेशा के लिए डिलीट कर दी गई है।");
         loadMarketplace();
     }
 </script>
