@@ -40,10 +40,6 @@
         button { background-color: var(--btn-green); color: #fff; border: none; cursor: pointer; font-weight: bold; }
         .btn-buyer { background-color: var(--accent-color); color: #0f172a; }
         
-        /* प्रोग्रेस बार की स्टाइल */
-        .progress-container { width: 100%; background: #0f172a; border-radius: 6px; margin: 10px 0; border: 1px solid var(--border-color); display: none; overflow: hidden; }
-        .progress-bar { width: 0%; height: 20px; background: var(--btn-green); text-align: center; line-height: 20px; color: white; font-size: 0.75rem; font-weight: bold; transition: width 0.2s; }
-
         .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 15px; }
         .video-card { background: #111827; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
         .video-thumbnail-box { height: 160px; background: #000; position: relative; }
@@ -120,12 +116,7 @@
             <label style="font-size: 0.85rem; color: var(--text-secondary);">वीडियो फ़ाइल चुनें:</label>
             <input type="file" id="videoFile" accept="video/*">
 
-            <!-- प्रोग्रेस बार एचटीएमएल -->
-            <div id="progressContainer" class="progress-container">
-                <div id="progressBar" class="progress-bar">0%</div>
-            </div>
-
-            <button onclick="uploadContent()" class="btn-buyer">मार्केटप्लेस पर लाइव करें</button>
+            <button onclick="uploadContent()" class="btn-buyer" style="margin-top: 15px;">मार्केटप्लेस पर लाइव करें</button>
         </div>
 
         <div id="statusBox" class="status-box"></div>
@@ -225,47 +216,23 @@
         const videoFile = fileInput.files[0];
         const filePath = "videos/" + Date.now() + "_" + videoFile.name;
 
-        // प्रोग्रेस बार दिखाना शुरू करें
-        const progressContainer = document.getElementById("progressContainer");
-        const progressBar = document.getElementById("progressBar");
-        progressContainer.style.display = "block";
-        progressBar.style.width = "0%";
-        progressBar.innerHTML = "0%";
+        showStatus("⏳ वीडियो स्टोरेज पर भेजी जा रही है...", "success");
 
-        showStatus("⏳ वीडियो अपलोड हो रही है...", "success");
-
-        // Supabase Storage Upload with simulated/real progress handling
-        // चूंकि Supabase JS v2 सीधा प्रोग्रेस इवेंट नहीं देता, इसलिए स्मूथ प्रोग्रेस एनीमेशन चला रहे हैं ताकि यूजर को फीडबैक मिले
-        let progress = 0;
-        const interval = setInterval(() => {
-            if (progress < 90) {
-                progress += 10;
-                progressBar.style.width = progress + "%";
-                progressBar.innerHTML = progress + "%";
-            }
-        }, 200);
-
-        const { error: uploadError } = await client.storage
+        // 1. Storage Upload (असली एरਰ ट्रैकिंग के साथ)
+        const { data: uploadData, error: uploadError } = await client.storage
             .from("videos")
             .upload(filePath, videoFile);
 
-        clearInterval(interval);
-
         if (uploadError) {
-            progressContainer.style.display = "none";
-            showStatus(`स्टोरेज अपलोड फेल! <br><b>असली एरर:</b> ${uploadError.message}`, "error");
+            showStatus(`स्टोरेज अपलोड फेल! <br><b>असली एरर:</b> ${uploadError.message} <br><br><b>सुझाव:</b> बकेट नाम 'videos' और उसकी पॉलिसी चेक करें।`, "error");
             return;
         }
 
-        // अपलोड पूरा होने पर 100% सेट करें
-        progressBar.style.width = "100%";
-        progressBar.innerHTML = "100%";
+        showStatus("⏳ वीडियो अपलोड हो गई, डेटाबेस में सेव हो रहा है...", "success");
 
         const { data: publicUrlData } = client.storage
             .from("videos")
             .getPublicUrl(filePath);
-
-        showStatus("⏳ डेटाबेस में एंट्री की जा रही है...", "success");
 
         // 2. Database Insert
         const { error: dbError } = await client.from("contents").insert([{
@@ -280,8 +247,7 @@
         }]);
 
         if (dbError) {
-            progressContainer.style.display = "none";
-            showStatus(`डेटाबेस सेव फेल! <br><b>असली एरर:</b> ${dbError.message}`, "error");
+            showStatus(`डेटाबेस सेव फेल! <br><b>असली एरर:</b> ${dbError.message} <br><br><b>सुझाव:</b> 'contents' टेबल में सभी कॉलम सही से बने हैं या नहीं चेक करें।`, "error");
         } else {
             showStatus("🎉 वीडियो सफलतापूर्वक मार्केटप्लेस पर लाइव हो गई है!", "success");
             document.getElementById("cTitle").value = "";
@@ -289,7 +255,6 @@
             document.getElementById("cPrice").value = "";
             fileInput.value = "";
             setTimeout(() => {
-                progressContainer.style.display = "none";
                 closeModal();
                 loadMarketplace();
             }, 1500);
